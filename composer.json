@@ -1,6 +1,7 @@
 {
     "require": {
-        "ext-dom": "*"
+        "ext-dom": "*",
+        "league/csv": "^9.0"
     },
     "autoload": {
         "psr-4": {
