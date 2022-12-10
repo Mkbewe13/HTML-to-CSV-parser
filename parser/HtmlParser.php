@@ -117,15 +117,44 @@ class HtmlParser
         $domNodeList = $this->getDomNodeListById('location_address');
 
 
-        return $this->parseAdress($domNodeList->item(0)->nodeValue);
+
+        return $this->parseAddress($domNodeList);
     }
 
-    private function parseAdress(string $fullAdress): array{
+    private function parseAddress(\DOMNodeList $domNodeList): array{
 
+        $childNodes = $domNodeList->item(0)->childNodes;
+        $addressHtml = '';
 
+        foreach ($childNodes as $childNode){
+            $addressHtml .= $childNode->ownerDocument->saveXML( $childNode );
+        }
 
+        $splittedAddressHtmlArray = explode('<br',$addressHtml);
 
+        $street = (isset($splittedAddressHtmlArray[0]) && !empty($splittedAddressHtmlArray[0])) ? $splittedAddressHtmlArray[0] : "n/d";
 
+        $restOfAddress =$splittedAddressHtmlArray[1];
+        $restOfAddress = explode(' ', $restOfAddress);
+
+        foreach ($restOfAddress as $key => $value){
+            if((empty($value) || !preg_match('/^[a-zA-Z0-9\w]*$/',$value)) && !preg_match('/\d{5}/',$value)) {
+                unset($restOfAddress[$key]);
+            }
+        }
+
+        $city = (isset($restOfAddress[0]) && !empty($restOfAddress[0])) ? $restOfAddress[0] : "";
+        $state = (isset($restOfAddress[1]) && !empty($restOfAddress[1])) ? $restOfAddress[1] : "";
+        $post_code = (isset($restOfAddress[2]) && !empty($restOfAddress[2])) ? $restOfAddress[2] : "";
+
+        return [
+            'street' => $street,
+            'city' => $city,
+            'state' => $state,
+            'post_code' => $post_code
+        ];
     }
 
 }
+
+
