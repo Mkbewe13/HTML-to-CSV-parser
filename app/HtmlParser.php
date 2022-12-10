@@ -35,7 +35,7 @@ class HtmlParser
             $result['address'] = $this->getAdressData();
             $result['phone'] = $this->getPhone();
         }catch (\Exception $e){
-            //@TODO obsłuzyc error message
+            //@TODO handle error message
         }
 
 

@@ -1,7 +1,8 @@
 <?php
 
-namespace exporter;
+namespace Parser;
 
+use JetBrains\PhpStorm\NoReturn;
 use League\Csv\ByteSequence;
 use League\Csv\Writer;
 
@@ -28,9 +29,9 @@ class CsvExporter
     private $content = [];
 
 
-    public function __construct()
+    public function __construct(string $filepath)
     {
-        $htmlParser = new \Parser\HtmlParser('wo_for_parse.html');
+        $htmlParser = new \Parser\HtmlParser($filepath);
         $this->parsed_data = $htmlParser->getParsedData();
 
         $this->setContent($this->parsed_data);
@@ -47,7 +48,7 @@ class CsvExporter
      *
      * @return void
      */
-    public function getCSVFile(){
+    #[NoReturn] public function getCSVFile(){
         ob_clean();
         $this->writer->output(self::FILENAME);
         die();
@@ -61,7 +62,8 @@ class CsvExporter
      * @throws \League\Csv\CannotInsertRecord
      * @throws \League\Csv\Exception
      */
-    private function setupWriter(){
+    private function setupWriter(): void
+    {
         $this->writer = Writer::createFromString();
         $this->writer->insertOne($this->header);
         $this->writer->insertOne($this->content);
@@ -70,7 +72,7 @@ class CsvExporter
         $this->writer->setOutputBOM(ByteSequence::BOM_UTF8);
     }
 
-    private function setContent(array $parsed_data)
+    private function setContent(array $parsed_data): void
     {
         foreach ($parsed_data as $data_item) {
             if (is_array($data_item)) {
@@ -81,7 +83,6 @@ class CsvExporter
                 $this->content[] = $data_item;
             }
         }
-        var_dump($this->content);
     }
 
 
