@@ -1,0 +1,10 @@
+{
+    "require": {
+        "ext-dom": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Parser\\": "parser/"
+        }
+    }
+}
