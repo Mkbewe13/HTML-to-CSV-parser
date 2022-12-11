@@ -10,7 +10,7 @@ class CsvExporter
 {
 
     private const FILENAME = "service_request.csv";
-    private $parsed_data;
+    private $parsedData;
     private $writer;
     private $header = [
         "Tracking Number",
@@ -29,17 +29,20 @@ class CsvExporter
     private $content = [];
 
 
+    /**
+     * @throws \Exception
+     */
     public function __construct(string $filepath)
     {
         $htmlParser = new \Parser\HtmlParser($filepath);
-        $this->parsed_data = $htmlParser->getParsedData();
+        $this->parsedData = $htmlParser->getParsedData();
 
-        $this->setContent($this->parsed_data);
+        $this->setContent($this->parsedData);
 
         try{
             $this->setupWriter();
         }catch (\League\Csv\Exception $e){
-            //@TODO handle exception
+            throw new \Exception('An error occurred during writer setup. Message:'  . $e->getMessage());
         }
     }
 
@@ -67,20 +70,18 @@ class CsvExporter
         $this->writer = Writer::createFromString();
         $this->writer->insertOne($this->header);
         $this->writer->insertOne($this->content);
-        $this->writer->setDelimiter("\t");
-        $this->writer->setNewline("\r\n");
         $this->writer->setOutputBOM(ByteSequence::BOM_UTF8);
     }
 
-    private function setContent(array $parsed_data): void
+    private function setContent(array $parsedData): void
     {
-        foreach ($parsed_data as $data_item) {
-            if (is_array($data_item)) {
-                foreach ($data_item as $item) {
+        foreach ($parsedData as $dataItem) {
+            if (is_array($dataItem)) {
+                foreach ($dataItem as $item) {
                     $this->content[] = $item;
                 }
             } else {
-                $this->content[] = $data_item;
+                $this->content[] = $dataItem;
             }
         }
     }

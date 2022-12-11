@@ -1,26 +1,34 @@
 <?php
 
-namespace parser;
+namespace Parser;
 
 class HtmlParser
 {
-    private \DOMDocument $dom_document;
-    private \DOMXPath $dom_xpath;
+    private \DOMDocument $domDocument;
+    private \DOMXPath $domXpath;
 
-
-    public function __construct(string $html_source)
+    /**
+     * @param string $htmlSource
+     * @throws \Exception
+     */
+    public function __construct(string $htmlSource)
     {
         try {
-            $this->dom_document = new \DOMDocument();
-            @$this->dom_document->loadHTMLFile($html_source);
-            $this->dom_xpath = new \DOMXPath($this->dom_document);
+            $this->domDocument = new \DOMDocument();
+            @$this->domDocument->loadHTMLFile($htmlSource);
+            $this->domXpath = new \DOMXPath($this->domDocument);
         }catch (\Exception $e){
-            //@TODO handle exception
+            throw new \Exception('An error occurred during HtmlParser setup. Message:'. $e->getMessage());
         }
 
     }
 
-
+    /**
+     * Return array with all parsed html data
+     *
+     * @return array
+     * @throws \Exception
+     */
     public function getParsedData(): array{
         $result = array();
 
@@ -35,7 +43,7 @@ class HtmlParser
             $result['address'] = $this->getAdressData();
             $result['phone'] = $this->getPhone();
         }catch (\Exception $e){
-            //@TODO handle error message
+            throw new \Exception('An error occurred during parsing html data. Message:' . $e->getMessage());
         }
 
 
@@ -43,9 +51,15 @@ class HtmlParser
 
     }
 
-    private function getDomNodeListById(string $id){
+    /**
+     *
+     * @param string $id
+     * @return \DOMNodeList|false|mixed|null
+     */
+    private function getDomNodeListById(string $id): mixed
+    {
         try{
-            $domNodeList = $this->dom_xpath->query("//*[@id='$id']");
+            $domNodeList = $this->domXpath->query("//*[@id='$id']");
         }catch (\Exception $e){
             return null;
         }
@@ -58,25 +72,49 @@ class HtmlParser
 
     }
 
-    private function getTrackingNumber()
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
+    private function getTrackingNumber(): mixed
     {
 
        $domNodeList = $this->getDomNodeListById('wo_number');
+
+       if(!$domNodeList || !$domNodeList->item(0)){
+           throw new \Exception('Failed to parse data: wo_number');
+       }
 
        return $domNodeList->item(0)->nodeValue;
 
     }
 
-    private function getPoNumber()
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
+    private function getPoNumber(): mixed
     {
         $domNodeList = $this->getDomNodeListById('po_number');
+
+        if(!$domNodeList || !$domNodeList->item(0)){
+            throw new \Exception('Failed to parse data: po_number');
+        }
 
         return $domNodeList->item(0)->nodeValue;
     }
 
-    private function getDateScheduled()
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    private function getDateScheduled(): string
     {
         $domNodeList = $this->getDomNodeListById('scheduled_date');
+
+        if(!$domNodeList || !$domNodeList->item(0)){
+            throw new \Exception('Failed to parse data: scheduled_dater');
+        }
 
         $date = explode(' ', trim($domNodeList->item(0)->nodeValue));
 
@@ -94,25 +132,46 @@ class HtmlParser
         return $date ? $date->format('Y-m-d H:i') : 'n/d';
     }
 
-    private function getCustomer()
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
+    private function getCustomer(): mixed
     {
         $domNodeList = $this->getDomNodeListById('location_customer');
 
+        if(!$domNodeList || !$domNodeList->item(0)){
+            throw new \Exception('Failed to parse data: location_customer');
+        }
 
         return $domNodeList->item(0)->nodeValue;
     }
 
-    private function getTrade()
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
+    private function getTrade(): mixed
     {
         $domNodeList = $this->getDomNodeListById('trade');
-
+        if(!$domNodeList || !$domNodeList->item(0)){
+            throw new \Exception('Failed to parse data: trade');
+        }
 
         return $domNodeList->item(0)->nodeValue;
     }
 
-    private function getNTE()
+    /**
+     * @return float
+     * @throws \Exception
+     */
+    private function getNTE(): float
     {
         $domNodeList = $this->getDomNodeListById('nte');
+
+        if(!$domNodeList || !$domNodeList->item(0)){
+            throw new \Exception('Failed to parse data: nte');
+        }
 
         $nte = $domNodeList->item(0)->nodeValue;
         $nte = preg_replace('/[^0-9.]/','',$nte);
@@ -120,30 +179,59 @@ class HtmlParser
         return floatval($nte);
     }
 
-    private function getStoreID()
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
+    private function getStoreID(): mixed
     {
         $domNodeList = $this->getDomNodeListById('location_name'); //location name instead of store_id because of wrong id in html file
+
+        if(!$domNodeList || !$domNodeList->item(0)){
+            throw new \Exception('Failed to parse data: store_id');
+        }
 
         return $domNodeList->item(0)->nodeValue;
     }
 
+    /**
+     * @return array
+     * @throws \Exception
+     */
     private function getAdressData(): array
     {
         $domNodeList = $this->getDomNodeListById('location_address');
+
+        if(!$domNodeList || !$domNodeList->item(0)){
+            throw new \Exception('Failed to parse data: location_address');
+        }
 
         return $this->parseAddress($domNodeList);
     }
 
 
+    /**
+     * @return float
+     * @throws \Exception
+     */
     private function getPhone(): float
     {
         $domNodeList = $this->getDomNodeListById('location_phone');
+
+        if(!$domNodeList || !$domNodeList->item(0)){
+            throw new \Exception('Failed to parse data: location_phone');
+        }
+
         $phone = $domNodeList->item(0)->nodeValue;
         $phone = preg_replace('/[^0-9]/','',$phone);
         return (float)$phone;
     }
 
 
+    /**
+     * @param \DOMNodeList $domNodeList
+     * @return array
+     */
     private function parseAddress(\DOMNodeList $domNodeList): array
     {
 
@@ -157,7 +245,7 @@ class HtmlParser
         $splittedAddressHtmlArray = explode('<br', $addressHtml);
 
         if(isset($splittedAddressHtmlArray[0]) && !empty($splittedAddressHtmlArray[0])){
-            $street = $this->get_street_with_number($splittedAddressHtmlArray[0]);
+            $street = $this->getStreetWithNumber($splittedAddressHtmlArray[0]);
         }else{
             $street = 'n/d';
         }
@@ -173,16 +261,20 @@ class HtmlParser
         $restOfAddress = array_values($restOfAddress);
         $city = (isset($restOfAddress[0]) && !empty($restOfAddress[0])) ? $restOfAddress[0] : "n/d";
         $state = (isset($restOfAddress[1]) && !empty($restOfAddress[1])) ? $restOfAddress[1] : "n/d";
-        $post_code = (isset($restOfAddress[2]) && !empty($restOfAddress[2])) ? $restOfAddress[2] : "n/d";
+        $postCode = (isset($restOfAddress[2]) && !empty($restOfAddress[2])) ? $restOfAddress[2] : "n/d";
         return [
             'street' => $street,
             'city' => $city,
             'state' => $state,
-            'post_code' => substr($post_code, 0, 5)];
+            'post_code' => substr($postCode, 0, 5)];
 
     }
 
-    private function get_street_with_number(string $splittedAddressHtml): string
+    /**
+     * @param string $splittedAddressHtml
+     * @return string
+     */
+    private function getStreetWithNumber(string $splittedAddressHtml): string
     {
 
         $street = explode(' ', strip_tags($splittedAddressHtml));
